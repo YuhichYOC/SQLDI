@@ -23,63 +23,50 @@ using System.Collections.Generic;
 using QueryBuilder;
 using SAXWrapper;
 
-namespace SQLDI
-{
-    public class SqlFactory
-    {
+namespace SQLDI {
+    public class SqlFactory {
         private string directory;
-        public void SetDirectory(string arg)
-        {
+        public void SetDirectory(string arg) {
             directory = arg;
         }
 
         private string fileName;
-        public void SetFileName(string arg)
-        {
+        public void SetFileName(string arg) {
             fileName = arg;
         }
 
         private SettingReader setting;
 
-        public SqlFactory()
-        {
+        public SqlFactory() {
         }
 
-        public void Prepare()
-        {
+        public void Prepare() {
             setting = new SettingReader();
             setting.SetDirectory(directory);
             setting.SetFileName(fileName);
             setting.Parse();
         }
 
-        public int Count()
-        {
-            if (setting == null)
-            {
+        public int Count() {
+            if (setting == null) {
                 return 0;
             }
             return setting.GetNode().Find(@"SqlFactory").GetChildren().Count;
         }
 
-        public string Name(int arg)
-        {
-            if (setting == null)
-            {
+        public string Name(int arg) {
+            if (setting == null) {
                 return string.Empty;
             }
-            for (int i = 0; i < setting.GetNode().Find(@"SqlFactory").GetChildren().Count; i++)
-            {
-                if (i == arg)
-                {
+            for (int i = 0; i < setting.GetNode().Find(@"SqlFactory").GetChildren().Count; i++) {
+                if (i == arg) {
                     return setting.GetNode().Find(@"SqlFactory").GetChildren()[i].GetNodeName();
                 }
             }
             return string.Empty;
         }
 
-        public string ToString(string name)
-        {
+        public string ToString(string name) {
             NodeEntity root = setting.GetNode().Find(@"SqlFactory").Find(name);
 
             SelectStatement s = SelectFromNode(root);
@@ -94,34 +81,28 @@ namespace SQLDI
             return s.ToString();
         }
 
-        private SelectStatement SelectFromNode(NodeEntity arg)
-        {
+        private SelectStatement SelectFromNode(NodeEntity arg) {
             SelectStatement ret = new SelectStatement();
             NodeEntity columns = arg.Find(@"Select");
-            for (int i = 0; i < columns.GetChildren().Count; i++)
-            {
+            for (int i = 0; i < columns.GetChildren().Count; i++) {
                 NodeEntity child = columns.GetChildren()[i];
-                if (i == 0)
-                {
+                if (i == 0) {
                     ret.SetTable(child.Find(@"Table").GetNodeValue());
                     ret.SetTableAlias(child.Find(@"Alias").GetNodeValue());
                 }
-                child.Find(@"Column").GetChildren().ForEach(item =>
-                {
+                child.Find(@"Column").GetChildren().ForEach(item => {
                     ret.AddColumn(item.GetNodeValue(), child.Find(@"Alias").GetNodeValue());
                 });
             }
             return ret;
         }
 
-        private List<JoinKeyword> JoinsFromNode(NodeEntity arg)
-        {
+        private List<JoinKeyword> JoinsFromNode(NodeEntity arg) {
             List<JoinKeyword> ret = new List<JoinKeyword>();
             string tableName = arg.Find(@"Select").Find(@"Columns", @"attr", @"Main").Find(@"Table").GetNodeValue();
             string tableAlias = arg.Find(@"Select").Find(@"Columns", @"attr", @"Main").Find(@"Alias").GetNodeValue();
             NodeEntity joins = arg.Find(@"Join");
-            joins.GetChildren().ForEach(item =>
-            {
+            joins.GetChildren().ForEach(item => {
                 JoinKeyword add = new JoinKeyword();
                 add.SetTable(tableName);
                 add.SetTableAlias(tableAlias);
@@ -131,8 +112,7 @@ namespace SQLDI
                 add.SetLeftOuterJoin(item.Find(@"Left").GetNodeValue() == @"True" ? true : false);
                 add.SetRightOuterJoin(item.Find(@"Right").GetNodeValue() == @"True" ? true : false);
                 add.SetCrossJoin(item.Find(@"Cross").GetNodeValue() == @"True" ? true : false);
-                item.Find(@"Conditions").GetChildren().ForEach(c =>
-                {
+                item.Find(@"Conditions").GetChildren().ForEach(c => {
                     add.AddCondition(
                         c.Find(@"Equal").GetNodeValue() == @"True" ? true : false
                       , c.Find(@"GreaterThanEqual").GetNodeValue() == @"True" ? true : false
@@ -145,12 +125,10 @@ namespace SQLDI
             return ret;
         }
 
-        private WhereKeyword WhereFromNode(NodeEntity arg)
-        {
+        private WhereKeyword WhereFromNode(NodeEntity arg) {
             WhereKeyword ret = new WhereKeyword();
             NodeEntity where = arg.Find(@"Where");
-            where.GetChildren().ForEach(item =>
-            {
+            where.GetChildren().ForEach(item => {
                 ret.AddCondition(
                     item.Find(@"Equal").GetNodeValue() == @"True" ? true : false
                   , item.Find(@"GreaterThanEqual").GetNodeValue() == @"True" ? true : false
